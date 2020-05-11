@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed May  6 02:43:18 2020
+
 @author: vasudevgupta
 """
 
@@ -13,7 +14,7 @@ import random
 import time
 import matplotlib.pyplot as plt
 
-env= gym.make('MsPacman-v0')
+env= gym.make('Breakout-v0')
 
 class Agent(object):
     def __init__(self):
@@ -88,7 +89,12 @@ class Agent(object):
             history= self.qmodel1.fit(s1, qtarget, epochs= 1)
         return history
 
-def episode(agent, timesteps= 100, epsilon= 0.8):
+LEARNING_RATE= 0.001
+EPISODES= 200
+BATCH_SIZE= 16
+agent= Agent()
+
+def episode(agent, timesteps= 100, epsilon= 0.9):
     start= time.time()
     avglosses= []
     for e in range(1, EPISODES+1):
@@ -96,7 +102,7 @@ def episode(agent, timesteps= 100, epsilon= 0.8):
         s1= agent.preprocess_state(init_state)
         for timestep in range(1, timesteps+1):
             #if e >= 1900:
-            env.render()
+            #env.render()
             a1, epsilon= agent.get_action(epsilon, s1)
             s2, r1, terminated, info= env.step(a1)
             s2= agent.preprocess_state(s2)
@@ -113,15 +119,32 @@ def episode(agent, timesteps= 100, epsilon= 0.8):
                 break
         end= time.time()
         print(f'time taken for training episode-{e} is {end - start}')
-    return avglosses
-
+    return avglosses, epsilon
 
 LEARNING_RATE= 0.001
-EPISODES= 266
-BATCH_SIZE= 32
+EPISODES= 200
+BATCH_SIZE= 16
 agent= Agent()
-agent.qmodel1.load_weights('/Users/vasudevgupta/Downloads/checkpoints/checkpoints_pacman_dqn_episodes_266/dqn_pacman')
-avglosses= episode(agent)
+# agent.qmodel1.load_weights('/Users/vasudevgupta/Downloads/checkpoints/checkpoints_pacman_dqn_episodes_266/dqn_pacman')
+avglosses, epsilon= episode(agent)
+
 
 #agent.qmodel1.save_weights('/Users/vasudevgupta/Downloads/checkpoints_pacman_dqn/dqn_pacman')
 plt.plot(np.arange(len(avglosses)), avglosses)
+
+###############################################################################
+# Rendering environment
+s1= env.reset()
+s1= agent.preprocess_state(s1)
+timesteps= 1000
+
+for timestep in range(1, timesteps+1):
+    env.render()
+    a1, epsilon= agent.get_action(epsilon= 2, s1= s1)
+    s2, r2, done, _= env.step(a1)
+    s2= agent.preprocess_state(s2)
+    s1= s2
+    if done:
+        break
+    time.sleep(0.03)
+###############################################################################
